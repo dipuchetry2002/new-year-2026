@@ -299,17 +299,6 @@ canvas {
   z-index: 2;
 }
 
-/* Timer Status Message */
-.timer-status {
-  margin-top: 15px;
-  font-size: 1.1rem;
-  color: var(--accent);
-  font-weight: 600;
-  min-height: 30px;
-  opacity: 0.9;
-  transition: all 0.5s ease;
-}
-
 /* Buttons */
 .controls {
   margin-top: 40px;
@@ -611,23 +600,23 @@ canvas {
   <div class="countdown" id="countdown">
     <div class="countdown-item">
       <div class="countdown-value" id="days">00</div>
-      <div class="countdown-label">Days</div>
+      <div class="countdown-label">DAYS</div>
     </div>
     <div class="countdown-item">
       <div class="countdown-value" id="hours">00</div>
-      <div class="countdown-label">Hours</div>
+      <div class="countdown-label">HOURS</div>
     </div>
     <div class="countdown-item">
       <div class="countdown-value" id="minutes">00</div>
-      <div class="countdown-label">Minutes</div>
+      <div class="countdown-label">MINUTES</div>
     </div>
     <div class="countdown-item">
       <div class="countdown-value" id="seconds">00</div>
-      <div class="countdown-label">Seconds</div>
+      <div class="countdown-label">SECONDS</div>
     </div>
   </div>
 
-  <div class="timer-status" id="timerStatus"></div>
+  <!-- Removed the timer status line here -->
   
   <div class="new-year-message" id="newYearMessage">
     🎉 Happy New Year 2026! The celebration has begun! 🎉
@@ -649,8 +638,10 @@ canvas {
   Made with <i class="fas fa-heart" style="color:#ff4ecd;"></i> by Dipu Chetry | Happy New Year 2026!
 </div>
 
-<audio id="bgMusic" loop>
-  <source src="https://assets.mixkit.co/music/preview/mixkit-happy-new-year-983.mp3" type="audio/mpeg">
+<!-- Changed to local music.mp3 file -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="music.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
 </audio>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -660,17 +651,37 @@ canvas {
 const music = document.getElementById("bgMusic");
 const musicBtn = document.getElementById("musicBtn");
 
+// Try to play music automatically (with user interaction)
+let musicAutoPlayAttempted = false;
+
 function toggleMusic() {
   if (music.paused) {
     music.play().then(() => {
       musicBtn.innerHTML = '<i class="fas fa-pause"></i> ⏸ Pause Music';
+      console.log("Music started playing");
     }).catch(e => {
       console.log("Audio play failed:", e);
-      musicBtn.innerHTML = '<i class="fas fa-music"></i> 🎵 Play Music';
+      // Show error to user
+      musicBtn.innerHTML = '<i class="fas fa-music"></i> ❌ Click Again';
+      setTimeout(() => {
+        musicBtn.innerHTML = '<i class="fas fa-music"></i> 🎵 Play Music';
+      }, 1000);
     });
   } else {
     music.pause();
     musicBtn.innerHTML = '<i class="fas fa-music"></i> 🎵 Play Music';
+  }
+}
+
+// Try to autoplay music after user interacts with page
+function attemptAutoPlay() {
+  if (!musicAutoPlayAttempted) {
+    musicAutoPlayAttempted = true;
+    music.play().then(() => {
+      musicBtn.innerHTML = '<i class="fas fa-pause"></i> ⏸ Pause Music';
+    }).catch(e => {
+      console.log("Autoplay failed, waiting for user interaction");
+    });
   }
 }
 
@@ -705,6 +716,9 @@ function celebrate() {
   for (let i = 0; i < 5; i++) {
     setTimeout(firework, i * 200);
   }
+  
+  // Try to autoplay music when user celebrates
+  attemptAutoPlay();
 }
 
 /* ===== Auto Celebrate on Page Load ===== */
@@ -722,6 +736,9 @@ window.addEventListener("load", () => {
   
   // Check if we need to show celebration mode
   checkNewYearStatus();
+  
+  // Set up user interaction for audio
+  document.addEventListener('click', attemptAutoPlay, { once: true });
 });
 
 /* ===== Stars Background ===== */
@@ -833,7 +850,6 @@ function updateCountdown() {
   if (diff <= 0) {
     // Hide the countdown
     document.getElementById('countdown').classList.add('hidden');
-    document.getElementById('timerStatus').textContent = "Happy New Year 2026!";
     
     // Show the celebration message
     document.getElementById('newYearMessage').classList.add('show');
@@ -867,11 +883,8 @@ function updateCountdown() {
   document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
   document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
   
-  // Update status message
+  // Highlight the minutes countdown item when less than 10 minutes
   if (days === 0 && hours === 0 && minutes < 10) {
-    document.getElementById('timerStatus').textContent = `New Year 2026 is just ${minutes} minutes away!`;
-    
-    // Highlight the minutes countdown item
     document.querySelectorAll('.countdown-item').forEach(item => item.classList.remove('highlight'));
     document.getElementById('minutes').parentElement.classList.add('highlight');
     
@@ -879,12 +892,8 @@ function updateCountdown() {
     if (minutes === 0 && seconds < 30) {
       celebrate();
     }
-  } else if (days === 0) {
-    document.getElementById('timerStatus').textContent = `New Year 2026 is today!`;
-  } else if (days === 1) {
-    document.getElementById('timerStatus').textContent = `New Year 2026 is tomorrow!`;
   } else {
-    document.getElementById('timerStatus').textContent = `Counting down to New Year 2026`;
+    document.querySelectorAll('.countdown-item').forEach(item => item.classList.remove('highlight'));
   }
 }
 
@@ -896,7 +905,6 @@ function checkNewYearStatus() {
   if (now >= targetDate) {
     // Hide countdown immediately
     document.getElementById('countdown').classList.add('hidden');
-    document.getElementById('timerStatus').textContent = "Happy New Year 2026!";
     document.getElementById('newYearMessage').classList.add('show');
     document.getElementById('card').classList.add('celebration-mode');
     
